@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+    <head>
+        <link rel="stylesheet" href="{{ url_for('static', filename= 'css/main.css') }}">
+        <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+    </head>
+    <body>
+        <div class='container'>
+            <h1>Producer Playlist</h1>
+            <div class="button-container" href="{{ url_for('test') }}">
+                <button class='button -green center'>Login to Spotify</button>
+            </div>
+        </div>
+    </body>
+</html>
