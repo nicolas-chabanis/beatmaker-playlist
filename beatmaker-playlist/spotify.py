@@ -195,19 +195,21 @@ class Spotify(HttpClient):
         response = await self.async_post(url=url, data=data, access_token=token, headers=headers)
         return response.get("id")
 
-    async def _upload_cover_image_playlist(self, playlist_id, playlist_image_encoded):
+    async def _upload_cover_image_playlist(self, playlist_id: str, playlist_image_encoded):
         """"""
-        logging.info(f"Uploading cover image for playlist {playlist_id}")
+        logging.info(f"Uploading cover image to playlist {playlist_id}")
         token = self._access_token_response.get("access_token", None)
         url = f"{self.BASE_URL}/playlists/{playlist_id}/images"
         headers = {"Content-Type": "image/jpeg"}
         await self.async_put(url=url, data=playlist_image_encoded, access_token=token, headers=headers)
 
-    # def add_tracks(self, playlist, matches: list[Match]):
-    #     user = spotify_oauth.me()["id"]
-    #     for match in matches:
-    #         self._add_tracks(match)
-
-    # def _add_tracks(self):
-    #     """"""
-    #     spotify_oauth.user_playlist_add_tracks(user, playlist["id"], match)
+    async def add_tracks(self, playlist_id: str, matches: list[Match]):
+        logging.info(f"Adding tracks to playlist {playlist_id}")
+        token = self._access_token_response.get("access_token", None)
+        url = f"{self.BASE_URL}/playlists/{playlist_id}/tracks"
+        uris = [f"spotify:track:{match.id}" for match in matches if match.id is not None]
+        data = {"uris": uris}
+        data = json.dumps(data, separators=(",", ":"), ensure_ascii=True)
+        logging.info(data)
+        response = await self.async_post(url=url, data=data, access_token=token)
+        logging.info(response)

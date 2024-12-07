@@ -66,11 +66,11 @@ class BeatmakerPlaylist:
         # Get producer image url from Genius
         beatmaker_image_url = await self._genius.get_producer_image_url(genius_beatmaker_id)
 
-        # # Create playlist
+        # Create playlist
         playlist_id = await self._spotify.create_playlist(genius_beatmaker_name, beatmaker_image_url)
 
-        # # Add tracks by ids
-        # self._spotify.add_tracks(playlist, matches)
+        # Add tracks by ids
+        await self._spotify.add_tracks(playlist_id, matches)
 
         beatmaker_playlist_results = BeatmakerPlaylistResults(
             genius_beatmaker_name,
