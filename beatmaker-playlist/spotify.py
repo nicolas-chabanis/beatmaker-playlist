@@ -7,6 +7,7 @@ import json
 import asyncio
 import aiohttp
 import textdistance
+import math
 
 from http_client import HttpClient
 import secret_keys
@@ -101,8 +102,6 @@ class Spotify(HttpClient):
         """"""
         query = track.artist + " " + track.title
         query_result = await self.search(query)
-        if type(query_result) is not dict:
-            logging.error(f"this object is not a dict : {query_result}")
         match = await self.find_match(track, query_result)
         return match
 
@@ -115,14 +114,10 @@ class Spotify(HttpClient):
         market = self._user.get("country")
         params = {"query": query, "type": "track", "market": market, "limit": limit}
         result = await self.async_get(url=url, access_token=token, params=params)
-        # TODO : Robustify : 429 API rate limit exceeded
         return result
 
     async def find_match(self, track: Track, query_result: json) -> Optional[str]:
         """"""
-        query = track.artist + " " + track.title
-        # write_json(data=query_result, filename=query)
-
         logging.info(f"Searching for track {repr(track)} on Spotify...")
         items = query_result.get("tracks", {}).get("items", [])
         for item in items:
@@ -171,13 +166,9 @@ class Spotify(HttpClient):
 
     async def create_playlist(self, beatmaker_name, playlist_image_url):
         """"""
-        token = self._access_token_response.get("access_token", None)
         playlist_id = await self._create_playlist(beatmaker_name=beatmaker_name)
+        await self._upload_cover_image_playlist(playlist_id, playlist_image_url)
         logging.info(f"Playlist created with id {playlist_id}")
-        playlist_image_bytes = await self.async_get(url=playlist_image_url, access_token=token)
-        playlist_image_encoded = base64.b64encode(playlist_image_bytes)
-        # playlist_image = base64.b64encode(requests.get(image_url).content)
-        await self._upload_cover_image_playlist(playlist_id, playlist_image_encoded)
         return playlist_id
 
     async def _create_playlist(self, beatmaker_name: str):
@@ -195,12 +186,14 @@ class Spotify(HttpClient):
         response = await self.async_post(url=url, data=data, access_token=token, headers=headers)
         return response.get("id")
 
-    async def _upload_cover_image_playlist(self, playlist_id: str, playlist_image_encoded):
+    async def _upload_cover_image_playlist(self, playlist_id: str, playlist_image_url: str):
         """"""
         logging.info(f"Uploading cover image to playlist {playlist_id}")
         token = self._access_token_response.get("access_token", None)
         url = f"{self.BASE_URL}/playlists/{playlist_id}/images"
         headers = {"Content-Type": "image/jpeg"}
+        playlist_image_bytes = await self.async_get(url=playlist_image_url, access_token=token)
+        playlist_image_encoded = base64.b64encode(playlist_image_bytes)
         await self.async_put(url=url, data=playlist_image_encoded, access_token=token, headers=headers)
 
     async def add_tracks(self, playlist_id: str, matches: list[Match]):
@@ -208,8 +201,14 @@ class Spotify(HttpClient):
         token = self._access_token_response.get("access_token", None)
         url = f"{self.BASE_URL}/playlists/{playlist_id}/tracks"
         uris = [f"spotify:track:{match.id}" for match in matches if match.id is not None]
-        data = {"uris": uris}
-        data = json.dumps(data, separators=(",", ":"), ensure_ascii=True)
-        logging.info(data)
-        response = await self.async_post(url=url, data=data, access_token=token)
-        logging.info(response)
+        number_of_batches = math.ceil(len(matches) / 100)  # Spotify limit : 100 items per request
+        for batch in range(number_of_batches):
+            if batch + 1 == number_of_batches:  # Last batch
+                uri_batch = uris[batch * 100 :]
+            else:
+                uri_batch = uris[batch * 100 : (batch + 1) * 100]
+            logging.info(f"    Batch {batch+1}/{number_of_batches}: {len(uri_batch)}")
+            data = {"uris": uri_batch}
+            data = json.dumps(data, separators=(",", ":"), ensure_ascii=True)
+            headers = {"Content-Type": "application/json"}
+            response = await self.async_post(url=url, data=data, access_token=token, headers=headers)

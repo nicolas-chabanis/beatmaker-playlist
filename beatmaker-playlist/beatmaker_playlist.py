@@ -60,8 +60,6 @@ class BeatmakerPlaylist:
 
         # Build the list of Spotify song IDs to add to the playlist
         matches = await self._spotify.build_song_id_list(genius_songs_produced)
-        for match in matches:
-            logging.info(match)
 
         # Get producer image url from Genius
         beatmaker_image_url = await self._genius.get_producer_image_url(genius_beatmaker_id)
