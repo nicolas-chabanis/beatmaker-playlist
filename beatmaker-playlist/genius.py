@@ -1,6 +1,5 @@
 import logging
 import asyncio
-import json
 import aiohttp
 
 from http_client import HttpClient

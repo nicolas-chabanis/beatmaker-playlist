@@ -1,9 +1,7 @@
-from unidecode import unidecode
 import aiohttp
-import logging
 from dataclasses import dataclass
-import pprint
 
+from utils import Match
 from spotify import Spotify
 from genius import Genius
 
@@ -16,6 +14,8 @@ class BeatmakerPlaylistResults:
     genius_beatmaker_id: int
     genius_songs_produced: list
     genius_songs_not_produced: list
+    matches: list[Match]
+    playlist_id: str
 
 
 class BeatmakerPlaylist:
@@ -75,5 +75,7 @@ class BeatmakerPlaylist:
             genius_beatmaker_id,
             genius_songs_produced,
             genius_songs_not_produced,
+            matches,
+            playlist_id,
         )
         return beatmaker_playlist_results

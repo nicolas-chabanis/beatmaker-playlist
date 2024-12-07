@@ -11,7 +11,7 @@ import math
 
 from http_client import HttpClient
 import secret_keys
-from utils import write_json, Track, normalize_string, Match
+from utils import Track, normalize_string, Match
 
 
 class Spotify(HttpClient):
@@ -128,7 +128,9 @@ class Spotify(HttpClient):
                 item_artist_name = item_artist.get("name")
                 item_track = Track(item_artist_name, item_title)
                 if self.tracks_match(track, item_track):
+                    logging.info(f"    -> {repr(track)} * {repr(item_track)}")
                     return Match(track, item_id)
+        logging.info("    No match found :(")
         return Match(track, None)
 
     def tracks_match(self, track: Track, item_track: Track):
@@ -149,9 +151,10 @@ class Spotify(HttpClient):
 
         match = (overlap_title <= 0.3) & (overlap_artist <= 0.3) & (dis_artist <= 0.3) & (dis_title <= 0.5)
 
-        match_string = "-> " if match else ""
-        track_match = f"    {match_string}{repr(track)} * {repr(item_track)} : {dis_artist} {dis_title} {overlap_artist} {overlap_title}"
-        logging.info(track_match)
+        track_match = (
+            f"    {repr(track)} * {repr(item_track)} : {dis_artist} {dis_title} {overlap_artist} {overlap_title}"
+        )
+        logging.debug(track_match)
 
         return match
 

@@ -2,7 +2,6 @@ import asyncio
 import aiohttp
 import json
 import time
-import logging
 
 
 class HTTPException(Exception):
