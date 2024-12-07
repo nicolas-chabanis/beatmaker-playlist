@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Spotify</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            margin-bottom: 70px;
+        }
+        .profile-container {
+            margin: auto;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            color: #1DB954;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        form {
+            display: inline-block;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <img src="{{ profile_image }}" alt="Spotify Profile Image">
+        <h1>Welcome, {{ user['display_name'] }}</h1>
+        <p><strong>ID Spotify :</strong> {{ user['id'] }}</p>
+        <a href="/">Logout</a>
+    </div>
+    <h1>Enter a beatmaker name</h1>
+    <form action="/create_playlist" method="post">
+        <input type="text" name="user_input" placeholder="Beatmaker name" required>
+        <button type="submit">Create playlist</button>
+    </form>
+</body>
+</html>

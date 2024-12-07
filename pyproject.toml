@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "beatmaker-playlist"
+requires-python = "==3.13.0"
+dynamic = ["version"]
+dependencies = [
+    "quart",
+    "asyncio",
+    "aiohttp",
+    "textdistance",
+    "unidecode",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black"
+]
+
+[tool.black]
+line-length = 119
+target-version = ['py313']

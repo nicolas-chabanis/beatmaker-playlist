@@ -1,1 +1,5 @@
-api_key.py
+secret_keys.py
+*.egg-info
+*__pycache__
+*.cache
+debug/
