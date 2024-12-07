@@ -2,3 +2,4 @@
 *__pycache__
 *.cache
 debug/
+beatmaker-playlist/secret_keys.py
