@@ -22,7 +22,7 @@ async def create_playlist(beatmaker_name: str) -> None:
     # Create playlist
     beatmaker_playlist_results = await playlist_manager.make_playlist(beatmaker_name)
 
-    logging.info(f"Spotify playlist url : {beatmaker_playlist_results.playlist_url}")
+    logging.info(f"Spotify playlist url : {beatmaker_playlist_results.playlist.url}")
 
     end_time = perf_counter()
     total_time = end_time - start_time

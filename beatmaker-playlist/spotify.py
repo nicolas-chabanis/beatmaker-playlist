@@ -11,7 +11,7 @@ import math
 
 from http_client import HttpClient
 import secret_keys
-from utils import Track, normalize_string, Match
+from utils import Track, normalize_string, Match, Playlist
 
 
 class Spotify(HttpClient):
@@ -22,7 +22,7 @@ class Spotify(HttpClient):
     OAUTH_AUTHORIZE_URL = "https://accounts.spotify.com/authorize"
     OAUTH_TOKEN_URL = "https://accounts.spotify.com/api/token"
 
-    def __init__(self, session: aiohttp.ClientSession, debug: bool = False, faster_tests: bool = False):
+    def __init__(self, session: aiohttp.ClientSession, debug: bool = False, faster_tests: bool = False) -> None:
         """"""
         super().__init__(session=session)
         self._access_token_response = None
@@ -30,11 +30,11 @@ class Spotify(HttpClient):
         self._debug = debug
         self._faster_tests = faster_tests
 
-    def set_access_token_response(self, access_token_response: dict):
+    def set_access_token_response(self, access_token_response: dict) -> dict:
         """"""
         self._access_token_response = access_token_response
 
-    def get_authorize_url(self):
+    def get_authorize_url(self) -> str:
         """"""
         payload = {
             "client_id": secret_keys.SPOTIFY_CLIENT_ID,
@@ -46,7 +46,7 @@ class Spotify(HttpClient):
         url = f"{self.OAUTH_AUTHORIZE_URL}?{urlparams}"
         return url
 
-    async def get_access_token(self, code) -> None:
+    async def get_access_token(self, code) -> str:
         """"""
         url = self.OAUTH_TOKEN_URL
         data = {
@@ -66,7 +66,7 @@ class Spotify(HttpClient):
         self._access_token_response = response
         return response.get("access_token", None)
 
-    async def get_user_profile(self):
+    async def get_user_profile(self) -> dict:
         """"""
         token = self._access_token_response.get("access_token")
         url = f"{self.BASE_URL}/me"
@@ -116,7 +116,7 @@ class Spotify(HttpClient):
         result = await self.async_get(url=url, access_token=token, params=params)
         return result
 
-    async def find_match(self, track: Track, query_result: json) -> Optional[str]:
+    async def find_match(self, track: Track, query_result: json) -> Match:
         """"""
         logging.info(f"Searching for track {repr(track)} on Spotify...")
         items = query_result.get("tracks", {}).get("items", [])
@@ -133,7 +133,7 @@ class Spotify(HttpClient):
         logging.info("    No match found :(")
         return Match(track, None)
 
-    def tracks_match(self, track: Track, item_track: Track):
+    def tracks_match(self, track: Track, item_track: Track) -> bool:
         """"""
         dis = textdistance.jaccard.normalized_distance
         overlap = textdistance.overlap.normalized_distance
@@ -158,7 +158,7 @@ class Spotify(HttpClient):
 
         return match
 
-    async def get_tracks(self, id: str):
+    async def get_tracks(self, id: str) -> dict:
         """"""
         token = self._access_token_response.get("access_token", None)
         url = f"{self.BASE_URL}/tracks/{id}"
@@ -167,16 +167,17 @@ class Spotify(HttpClient):
         result = await self.async_get(url=url, access_token=token, params=params)
         return result
 
-    async def create_playlist(self, beatmaker_name, playlist_image_url):
+    async def create_playlist(self, beatmaker_name, playlist_image_url) -> Playlist:
         """"""
         response = await self._create_playlist(beatmaker_name=beatmaker_name)
         playlist_id = response.get("id")
+        playlist_name = response.get("name")
         playlist_url = response.get("external_urls", {}).get("spotify", "")
-        await self._upload_cover_image_playlist(playlist_id, playlist_image_url)
+        playlist_image = await self._upload_cover_image_playlist(playlist_id, playlist_image_url)
         logging.info(f"Playlist created with id {playlist_id}")
-        return playlist_id, playlist_url
+        return Playlist(playlist_id, playlist_name, playlist_url, playlist_image)
 
-    async def _create_playlist(self, beatmaker_name: str):
+    async def _create_playlist(self, beatmaker_name: str) -> dict:
         """"""
         logging.info(f"Creating playlist for beatmaker {beatmaker_name}")
         token = self._access_token_response.get("access_token", None)
@@ -191,7 +192,7 @@ class Spotify(HttpClient):
         response = await self.async_post(url=url, data=data, access_token=token, headers=headers)
         return response
 
-    async def _upload_cover_image_playlist(self, playlist_id: str, playlist_image_url: str):
+    async def _upload_cover_image_playlist(self, playlist_id: str, playlist_image_url: str) -> str:
         """"""
         logging.info(f"Uploading cover image to playlist {playlist_id}")
         token = self._access_token_response.get("access_token", None)
@@ -199,12 +200,14 @@ class Spotify(HttpClient):
         headers = {"Content-Type": "image/jpeg"}
         playlist_image_bytes = await self.async_get(url=playlist_image_url, access_token=token)
         playlist_image_encoded = base64.b64encode(playlist_image_bytes)
+        playlist_image = f"data:image/jpeg;base64,{playlist_image_encoded.decode("utf-8")}"
         await self.async_put(url=url, data=playlist_image_encoded, access_token=token, headers=headers)
+        return playlist_image
 
-    async def add_tracks(self, playlist_id: str, matches: list[Match]):
-        logging.info(f"Adding tracks to playlist {playlist_id}")
+    async def add_tracks(self, playlist: Playlist, matches: list[Match]) -> None:
+        logging.info(f"Adding tracks to playlist {playlist.id}")
         token = self._access_token_response.get("access_token", None)
-        url = f"{self.BASE_URL}/playlists/{playlist_id}/tracks"
+        url = f"{self.BASE_URL}/playlists/{playlist.id}/tracks"
         uris = [f"spotify:track:{match.id}" for match in matches if match.id is not None]
         number_of_batches = math.ceil(len(matches) / 100)  # Spotify limit : 100 items per request
         for batch in range(number_of_batches):

@@ -28,6 +28,16 @@ class Match:
         return repr(self.track) + ": " + repr(self.id)
 
 
+@dataclass
+class Playlist:
+    """"""
+
+    id: str
+    name: str
+    url: str
+    image: str
+
+
 def clean_json_str(string: str):
     """"""
     return json.dumps(string, ensure_ascii=False).replace('"', "")

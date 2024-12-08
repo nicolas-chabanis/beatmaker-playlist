@@ -11,15 +11,19 @@
             margin-top: 50px;
         }
         .result {
-            font-size: 20px;
-            color: #333;
-            margin-top: 20px;
+            margin: auto;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
         }
         a {
-            margin-top: 20px;
             display: inline-block;
+            margin-top: 20px;
+            color: #1DB954;
             text-decoration: none;
-            color: #007BFF;
+            font-weight: bold;
         }
         a:hover {
             text-decoration: underline;
@@ -28,8 +32,10 @@
 </head>
 <body>
     <div class="result">
-        <p><strong>Playlist url :</strong> <a href="{{ playlist_url }}" target="_blank">{{ playlist_url }}</a></p>
+        <img src="{{ playlist_image }}" alt="Spotify playlist cover">
+        <h1>{{ playlist_name }}</h1>
+        <p><strong>Playlist created successfully :</strong> <a href="{{ playlist_url }}" target="_blank">Open playlist</a></p>
+        <a href="/beatmaker">Create another playlist</a>
     </div>
-    <a href="/beatmaker">Create another playlist</a>
 </body>
 </html>

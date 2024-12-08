@@ -65,11 +65,13 @@ async def create_playlist():
     if not beatmaker_name:
         return "Error : no beatmaker name given", 400
 
-    beatmaker_playlist_results: BeatmakerPlaylistResults = await app.playlist_manager.make_playlist(beatmaker_name)
+    beatmaker_playlist_results = await app.playlist_manager.make_playlist(beatmaker_name)
 
     return await render_template(
         "create_playlist.html",
-        playlist_url=beatmaker_playlist_results.playlist_url,
+        playlist_name=beatmaker_playlist_results.playlist.name,
+        playlist_url=beatmaker_playlist_results.playlist.url,
+        playlist_image=beatmaker_playlist_results.playlist.image,
     )
 
 

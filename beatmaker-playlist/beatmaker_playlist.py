@@ -1,7 +1,7 @@
 import aiohttp
 from dataclasses import dataclass
 
-from utils import Match
+from utils import Match, Playlist
 from spotify import Spotify
 from genius import Genius
 
@@ -15,7 +15,7 @@ class BeatmakerPlaylistResults:
     genius_songs_produced: list
     genius_songs_not_produced: list
     matches: list[Match]
-    playlist_url: str
+    playlist: Playlist
 
 
 class BeatmakerPlaylist:
@@ -65,10 +65,10 @@ class BeatmakerPlaylist:
         beatmaker_image_url = await self._genius.get_producer_image_url(genius_beatmaker_id)
 
         # Create playlist
-        playlist_id, playlist_url = await self._spotify.create_playlist(genius_beatmaker_name, beatmaker_image_url)
+        playlist: Playlist = await self._spotify.create_playlist(genius_beatmaker_name, beatmaker_image_url)
 
         # Add tracks by ids
-        await self._spotify.add_tracks(playlist_id, matches)
+        await self._spotify.add_tracks(playlist, matches)
 
         beatmaker_playlist_results = BeatmakerPlaylistResults(
             genius_beatmaker_name,
@@ -76,6 +76,6 @@ class BeatmakerPlaylist:
             genius_songs_produced,
             genius_songs_not_produced,
             matches,
-            playlist_url,
+            playlist,
         )
         return beatmaker_playlist_results
