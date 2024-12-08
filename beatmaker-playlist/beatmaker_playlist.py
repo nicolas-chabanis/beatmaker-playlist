@@ -15,7 +15,7 @@ class BeatmakerPlaylistResults:
     genius_songs_produced: list
     genius_songs_not_produced: list
     matches: list[Match]
-    playlist_id: str
+    playlist_url: str
 
 
 class BeatmakerPlaylist:
@@ -65,7 +65,7 @@ class BeatmakerPlaylist:
         beatmaker_image_url = await self._genius.get_producer_image_url(genius_beatmaker_id)
 
         # Create playlist
-        playlist_id = await self._spotify.create_playlist(genius_beatmaker_name, beatmaker_image_url)
+        playlist_id, playlist_url = await self._spotify.create_playlist(genius_beatmaker_name, beatmaker_image_url)
 
         # Add tracks by ids
         await self._spotify.add_tracks(playlist_id, matches)
@@ -76,6 +76,6 @@ class BeatmakerPlaylist:
             genius_songs_produced,
             genius_songs_not_produced,
             matches,
-            playlist_id,
+            playlist_url,
         )
         return beatmaker_playlist_results

@@ -63,15 +63,13 @@ async def create_playlist():
     """"""
     beatmaker_name = (await request.form).get("user_input")  # Récupérer la valeur de l'input
     if not beatmaker_name:
-        return "Erreur : aucun texte fourni.", 400
+        return "Error : no beatmaker name given", 400
 
     beatmaker_playlist_results: BeatmakerPlaylistResults = await app.playlist_manager.make_playlist(beatmaker_name)
 
     return await render_template(
         "create_playlist.html",
-        name=beatmaker_playlist_results.genius_beatmaker_name,
-        id=beatmaker_playlist_results.genius_beatmaker_id,
-        # songs=beatmaker_playlist_results.genius_songs_produced,
+        playlist_url=beatmaker_playlist_results.playlist_url,
     )
 
 

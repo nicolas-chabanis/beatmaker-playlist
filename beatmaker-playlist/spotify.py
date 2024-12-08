@@ -169,10 +169,12 @@ class Spotify(HttpClient):
 
     async def create_playlist(self, beatmaker_name, playlist_image_url):
         """"""
-        playlist_id = await self._create_playlist(beatmaker_name=beatmaker_name)
+        response = await self._create_playlist(beatmaker_name=beatmaker_name)
+        playlist_id = response.get("id")
+        playlist_url = response.get("external_urls", {}).get("spotify", "")
         await self._upload_cover_image_playlist(playlist_id, playlist_image_url)
         logging.info(f"Playlist created with id {playlist_id}")
-        return playlist_id
+        return playlist_id, playlist_url
 
     async def _create_playlist(self, beatmaker_name: str):
         """"""
@@ -187,7 +189,7 @@ class Spotify(HttpClient):
         data = json.dumps(data, separators=(",", ":"), ensure_ascii=True)
         headers = {"Content-Type": "application/json"}
         response = await self.async_post(url=url, data=data, access_token=token, headers=headers)
-        return response.get("id")
+        return response
 
     async def _upload_cover_image_playlist(self, playlist_id: str, playlist_image_url: str):
         """"""
