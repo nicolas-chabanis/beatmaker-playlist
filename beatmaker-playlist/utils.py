@@ -8,6 +8,10 @@ from PIL import Image
 import io
 
 
+class ImageTooBig(Exception):
+    """"""
+
+
 @dataclass
 class Track:
     """"""
@@ -67,5 +71,23 @@ def resize_image(bytes: bytes, width, height) -> bytes:
     playlist_image = Image.open(io.BytesIO(bytes))
     playlist_image.thumbnail((width, height), Image.Resampling.LANCZOS)
     output_buffer = io.BytesIO()
-    playlist_image.save(output_buffer, format=playlist_image.format, quality=100)
+    playlist_image.save(output_buffer, format=playlist_image.format, quality=95)
     return output_buffer.getvalue()
+
+
+def compress_image(bytes: bytes, target_size_kb: int, max_width, max_height) -> bytes:
+    """"""
+    MAX_QUALITY = 95
+    MIN_QUALITY = 10
+    step = 5
+    target_size_bytes = target_size_kb * 1024
+
+    playlist_image = Image.open(io.BytesIO(bytes))
+    playlist_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+    for quality in range(MAX_QUALITY, MIN_QUALITY, -step):
+        output_buffer = io.BytesIO()
+        playlist_image.save(output_buffer, format=playlist_image.format, quality=quality, optimize=True)
+        size = output_buffer.tell()
+        if size <= target_size_bytes:
+            return output_buffer.getvalue()
+    raise ImageTooBig

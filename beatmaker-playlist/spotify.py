@@ -11,7 +11,7 @@ import math
 
 from http_client import HttpClient
 import secret_keys
-from utils import Track, normalize_string, Match, Playlist, resize_image
+from utils import Track, normalize_string, Match, Playlist, resize_image, compress_image
 
 
 class Spotify(HttpClient):
@@ -194,12 +194,19 @@ class Spotify(HttpClient):
     async def _upload_cover_image_playlist(self, playlist_id: str, playlist_image_url: str) -> str:
         """"""
         logging.info(f"Uploading cover image to playlist {playlist_id}")
+
+        # Download playlist image from Genius.com
+        playlist_image_bytes = await self.async_get(url=playlist_image_url)
+
+        # Upload playlist image to Spotify playlist, resized to 300x300 and with a maximum size of 256 kB
+        playlist_image_compressed = compress_image(playlist_image_bytes, 256, 300, 300)
+        playlist_image_b64 = base64.b64encode(playlist_image_compressed)
         token = self._access_token_response.get("access_token", None)
         url = f"{self.BASE_URL}/playlists/{playlist_id}/images"
         headers = {"Content-Type": "image/jpeg"}
-        playlist_image_bytes = await self.async_get(url=playlist_image_url, access_token=token)
-        playlist_image_b64 = base64.b64encode(playlist_image_bytes)  # TODO : vérifier si l'image fait < 256 KB
         await self.async_put(url=url, data=playlist_image_b64, access_token=token, headers=headers)
+
+        # Return playlist image for frontend, resized to 200x200
         playlist_image_bytes_resized = resize_image(playlist_image_bytes, width=200, height=200)
         playlist_image_b64_str = base64.b64encode(playlist_image_bytes_resized).decode("utf-8")
         playlist_image = f"data:image/jpeg;base64,{playlist_image_b64_str}"
