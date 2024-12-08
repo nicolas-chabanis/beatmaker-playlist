@@ -68,7 +68,7 @@ class Spotify(HttpClient):
 
     async def get_user_profile(self) -> dict:
         """"""
-        token = self._access_token_response.get("access_token")
+        token = self._access_token_response.get("access_token", "")
         url = f"{self.BASE_URL}/me"
         response = await self.async_get(url=url, access_token=token)
         logging.info(json.dumps(response))
