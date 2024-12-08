@@ -11,7 +11,7 @@ import math
 
 from http_client import HttpClient
 import secret_keys
-from utils import Track, normalize_string, Match, Playlist
+from utils import Track, normalize_string, Match, Playlist, resize_image
 
 
 class Spotify(HttpClient):
@@ -199,9 +199,11 @@ class Spotify(HttpClient):
         url = f"{self.BASE_URL}/playlists/{playlist_id}/images"
         headers = {"Content-Type": "image/jpeg"}
         playlist_image_bytes = await self.async_get(url=playlist_image_url, access_token=token)
-        playlist_image_encoded = base64.b64encode(playlist_image_bytes)
-        playlist_image = f"data:image/jpeg;base64,{playlist_image_encoded.decode("utf-8")}"
-        await self.async_put(url=url, data=playlist_image_encoded, access_token=token, headers=headers)
+        playlist_image_b64 = base64.b64encode(playlist_image_bytes)  # TODO : vérifier si l'image fait < 256 KB
+        await self.async_put(url=url, data=playlist_image_b64, access_token=token, headers=headers)
+        playlist_image_bytes_resized = resize_image(playlist_image_bytes, width=200, height=200)
+        playlist_image_b64_str = base64.b64encode(playlist_image_bytes_resized).decode("utf-8")
+        playlist_image = f"data:image/jpeg;base64,{playlist_image_b64_str}"
         return playlist_image
 
     async def add_tracks(self, playlist: Playlist, matches: list[Match]) -> None:

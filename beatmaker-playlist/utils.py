@@ -4,6 +4,8 @@ from pathlib import Path
 import re
 from typing import Optional
 import unidecode
+from PIL import Image
+import io
 
 
 @dataclass
@@ -58,3 +60,12 @@ def write_json(data: dict, filename: str, directory: str = "debug") -> None:
     file_path = dir / safe_filename
     with file_path.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
+
+def resize_image(bytes: bytes, width, height) -> bytes:
+    """"""
+    playlist_image = Image.open(io.BytesIO(bytes))
+    playlist_image.thumbnail((width, height))
+    output_buffer = io.BytesIO()
+    playlist_image.save(output_buffer, format=playlist_image.format)
+    return output_buffer.getvalue()

@@ -12,6 +12,7 @@ dependencies = [
     "aiohttp",
     "textdistance",
     "unidecode",
+    "pillow"
 ]
 
 [project.optional-dependencies]
