@@ -78,14 +78,13 @@ class Spotify(HttpClient):
     async def get_user_profile_image(self) -> str:
         """"""
         profile_images = self._user.get("images", {})
-        profile_image_url = ""
-        for images in profile_images:
-            if images.get("height", None) == 300:  # TODO: Robustify
-                profile_image_url = images.get("url", "")
-        logging.info(f"Downloading profile image at {profile_image_url}")
-        profile_image_bytes = await self.async_get(url=profile_image_url)
-        profile_image_encoded = base64.b64encode(profile_image_bytes).decode("utf-8")
-        profile_image = f"data:image/jpeg;base64,{profile_image_encoded}"
+        largest_image = max(profile_images, key=lambda img: img.get("height", 0))
+        largest_image_url = largest_image.get("url", "")
+        logging.info(f"Downloading profile image at {largest_image_url}")
+        profile_image_bytes = await self.async_get(url=largest_image_url)
+        profile_image_bytes_resized = resize_image(profile_image_bytes, width=150, height=150)
+        profile_image_b64_str = base64.b64encode(profile_image_bytes_resized).decode("utf-8")
+        profile_image = f"data:image/jpeg;base64,{profile_image_b64_str}"
         return profile_image
 
     async def build_song_id_list(self, tracks: list[Track]) -> list[Match]:

@@ -65,7 +65,7 @@ def write_json(data: dict, filename: str, directory: str = "debug") -> None:
 def resize_image(bytes: bytes, width, height) -> bytes:
     """"""
     playlist_image = Image.open(io.BytesIO(bytes))
-    playlist_image.thumbnail((width, height))
+    playlist_image.thumbnail((width, height), Image.Resampling.LANCZOS)
     output_buffer = io.BytesIO()
-    playlist_image.save(output_buffer, format=playlist_image.format)
+    playlist_image.save(output_buffer, format=playlist_image.format, quality=100)
     return output_buffer.getvalue()
