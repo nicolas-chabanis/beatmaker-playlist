@@ -217,7 +217,7 @@ class Spotify(HttpClient):
         token = self._access_token_response.get("access_token", None)
         url = f"{self.BASE_URL}/playlists/{playlist.id}/tracks"
         uris = [f"spotify:track:{match.id}" for match in matches if match.id is not None]
-        number_of_batches = math.ceil(len(matches) / 100)  # Spotify limit : 100 items per request
+        number_of_batches = math.ceil(len(uris) / 100)  # Spotify limit : 100 items per request
         for batch in range(number_of_batches):
             if batch + 1 == number_of_batches:  # Last batch
                 uri_batch = uris[batch * 100 :]
@@ -227,4 +227,4 @@ class Spotify(HttpClient):
             data = {"uris": uri_batch}
             data = json.dumps(data, separators=(",", ":"), ensure_ascii=True)
             headers = {"Content-Type": "application/json"}
-            response = await self.async_post(url=url, data=data, access_token=token, headers=headers)
+            await self.async_post(url=url, data=data, access_token=token, headers=headers)

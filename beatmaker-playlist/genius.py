@@ -79,7 +79,7 @@ class Genius(HttpClient):
         songs = []
 
         page = 1
-        per_page = 50 if not self._faster_tests else 5
+        per_page = 50 if not self._faster_tests else 10
         while page:
             logging.info(f"    current page: {page} ({per_page} elements)")
             params = {"sort": "popularity", "per_page": per_page, "page": page}

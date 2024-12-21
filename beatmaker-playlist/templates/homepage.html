@@ -1,32 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Beatmaker Playlist</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                text-align: center;
-                margin-top: 50px;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beatmaker Playlist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            margin-bottom: 70px;
+        }
+        .profile-container {
+            margin: auto;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            color: #1DB954;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        form {
+            display: inline-block;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <img src="{{ profile_image }}" alt="Spotify Profile Image">
+        <h2>Welcome, {{ user['display_name'] }}</h2>
+        <p><strong>ID Spotify :</strong> {{ user['id'] }}</p>
+        <a href="/">Logout</a>
+    </div>
+    <h1>Enter a beatmaker name</h1>
+    <form id="create-playlist-form">
+        <input type="text" id="beatmaker-name" name="beatmaker_name" placeholder="Beatmaker name" required>
+        <button type="button" onclick="submitTask()">Create playlist</button>
+    </form>
+    <div id="taskStatus"></div>
+    <div id="taskResult"></div>
+    <script>
+
+        async function submitTask() {
+            try {
+                const formData = {
+                    beatmaker_name: document.querySelector('input[name="beatmaker_name"]').value
+                };
+
+                const response = await fetch('/create_playlist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const socket = new WebSocket(
+                    `${protocol}//127.0.0.1:8000/task-status/${data.user_id}/${data.task_id}`
+                );
+
+                socket.addEventListener('open', (event) => {
+                    console.log('WebSocket connection established');
+                });
+
+                socket.addEventListener('message', (event) => {
+                    // console.log('Raw message received:', event.data);
+                    try {
+                        const taskStatus = JSON.parse(event.data);
+                        console.log("Task state received:", taskStatus);
+                        
+                        if (taskStatus.error) {
+                            document.getElementById('taskStatus').innerHTML = 
+                                `Error: ${taskStatus.error}`;
+                            socket.close();
+                            return;
+                        }
+
+                        document.getElementById('taskStatus').innerHTML = 
+                            `Progress: ${taskStatus.progress}% 
+                            ${taskStatus.completed ? 'Completed' : ''}`; // Current step: ${taskStatus.current_step || 'Initializing'}
+
+                        if (taskStatus.completed) {
+                            socket.close();
+                            fetchTaskResult(data.user_id, data.task_id);
+                        }
+                    } catch (e) {
+                        console.error("Error parsing WebSocket message:", e);
+                        document.getElementById('taskStatus').innerHTML = 
+                            `Error processing server message: ${e.message}`;
+                    }
+                });
+
+
+                socket.addEventListener('error', (error) => {
+                    console.error("WebSocket error:", error);
+                    document.getElementById('taskStatus').innerHTML = 
+                        `WebSocket error occurred. Please try refreshing the page.`;
+                });
+
+                socket.addEventListener('close', (event) => {
+                    console.log("WebSocket connection closed", event);
+                    if (!event.wasClean) {
+                        document.getElementById('taskStatus').innerHTML += 
+                            `<br>Connection closed unexpectedly. Code: ${event.code}`;
+                    }
+                });
+            } catch (error) {
+                console.error("Error in submitTask:", error);
+                document.getElementById('taskStatus').innerHTML = 
+                    `Error: ${error.message}`;
             }
-            .login-button {
-                background-color: #1DB954;
-                color: white;
-                padding: 15px 30px;
-                font-size: 18px;
-                border: none;
-                border-radius: 25px;
-                cursor: pointer;
-                text-decoration: none;
+        }
+
+        async function fetchTaskResult(userId, taskId) {
+            if (!userId) return;
+
+            try {
+                const response = await fetch(
+                    `/task-result/${userId}/${taskId}`
+                );
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    document.getElementById('taskResult').innerHTML = 
+                        `Result: ${JSON.stringify(data.result, null, 2)}`;
+                } else {
+                    document.getElementById('taskResult').innerHTML = 
+                        `Error: ${data.error}`;
+                }
+            } catch (error) {
+                document.getElementById('taskResult').innerHTML = 
+                    `Fetch Error: ${error.message}`;
             }
-            .login-button:hover {
-                background-color: #17a84d;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>Login to Spotify</h1>
-        <a class="login-button" href="/login">Login to Spotify</a>
-    </body>
+        }
+    </script>
+</body>
 </html>
